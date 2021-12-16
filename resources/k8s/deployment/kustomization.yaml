@@ -1,0 +1,12 @@
+namespace: production
+resources:
+- deployment.yaml
+- service.yaml
+- namespace.yaml
+commonLabels:
+  app.kubernetes.io/name: ecr-codebuild-clj-web 
+images:
+  - name: 111664719423.dkr.ecr.us-west-1.amazonaws.com/ecr-codebuild-clj-web
+  newTag: v1
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization

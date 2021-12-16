@@ -1,0 +1,25 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region us-west-1 | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.us-west-1.amazonaws.com
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image...          
+      - aws s3 cp s3://ecr-integration-test-us-west-1/creds/.docker.key .docker.key
+      - docker login -u slimslenderslacks --password-stdin < .docker.key
+      - rm .docker.key
+      - docker build -t image:latest --label "org.opencontainers.image.revision=$CODEBUILD_RESOLVED_SOURCE_VERSION" --label "org.opencontainers.image.source=base/Dockerfile" -f base/Dockerfile .
+      - docker tag image:latest "$AWS_ACCOUNT_ID.dkr.ecr.us-west-1.amazonaws.com/ecr-codebuild-clj-web"
+      # - echo Building the service Docker image...
+      # - docker build -t service:latest --label "org.opencontainers.image.revision=$CODEBUILD_RESOLVED_SOURCE_VERSION" --label "org.opencontainers.image.source=service/Dockerfile" -f service/Dockerfile .
+      # - docker tag service:latest $AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/service:latest
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker image...
+      - docker push "$AWS_ACCOUNT_ID.dkr.ecr.us-west-1.amazonaws.com/ecr-codebuild-clj-web:latest"
+      # - docker push $AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/service:latest
