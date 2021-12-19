@@ -1,0 +1,5 @@
+{:main atomist.web.handler
+ :base-image {:image-name "openjdk:11-slim-buster"
+              :type :registry}
+ :target-image {:image-name "slimslenderslacks/openjdk-clj-web"
+                :type :docker}}
