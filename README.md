@@ -16,3 +16,5 @@ brew install kustomize
 aws eks update-kubeconfig --region us-west-1 --name atmtest
 kubectl config use-context arn:aws:eks:us-west-1:111664719423:cluster/atmtest
 ```
+
+
