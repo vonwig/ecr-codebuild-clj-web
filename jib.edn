@@ -1,8 +1,7 @@
 {:main atomist.web.handler
  :target-image {:type :registry
                 :image-name "111664719423.dkr.ecr.us-west-1.amazonaws.com/ecr-codebuild-clj-web"
-                :tagger {:fn jibbit.tagger/tag
-                         :args {:local "version.txt"} }
+                :tagger {:fn jibbit.tagger/tag}
                 :authorizer {:fn leiningen.aws-ecr-auth/ecr-auth
                              :args 
                              {:type :profile

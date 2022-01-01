@@ -7,6 +7,6 @@ commonLabels:
   app.kubernetes.io/name: ecr-codebuild-clj-web
 images:
 - name: 111664719423.dkr.ecr.us-west-1.amazonaws.com/ecr-codebuild-clj-web
-  newTag: v26
+  newTag: v1-1-gea591ca
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
