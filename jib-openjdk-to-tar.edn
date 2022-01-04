@@ -1,4 +1,5 @@
 {:main atomist.web.handler
+ :aliases [:production :jetty]
  :base-image {:image-name "openjdk:11-slim-buster"
               :type :registry}
  :target-image {:image-name "slimslenderslacks/openjdk-clj-web"
