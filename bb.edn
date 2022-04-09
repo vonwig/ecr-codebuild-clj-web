@@ -57,7 +57,7 @@
                               (clojure "-T:jib" "build" ":tag" version))}
 
          syft {:depends [build-image version]
-               :task (shell (format "syft docker:111664719423.dkr.ecr.us-west-1.amazonaws.com/ecr-codebuild-clj-web:%s -o spdx-json=sbom.spdx.json -o json=sbom.syft.json" version))
+               :task (shell (format "syft docker:111664719423.dkr.ecr.us-west-1.amazonaws.com/ecr-codebuild-clj-web:%s -o spdx-json=sbom.spdx.json -o json=sbom.syft.json -o cyclonedx-json=sbom.cyclonedex.json" version))
                }
 
          kube-config-context {:task (if-let [c (-> cli-opts :options :context)]
