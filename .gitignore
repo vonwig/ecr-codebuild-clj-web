@@ -2,3 +2,5 @@
 /.cpcache/
 /.lsp/
 /.nrepl-port
+/sbom.spdx.json
+/sbom.syft.json
