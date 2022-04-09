@@ -8,31 +8,56 @@
                     [babashka.process :as p]
                     [babashka.fs :as fs]
                     [clojure.tools.cli :as cli]
-                    [tasks :as git]]
+                    [tasks]]
          :init (do (def cli-opts (cli/parse-opts *command-line-args* [["-m" "--message MESSSAGE" ""]
                                                                       [nil "--skip-clean-check" "run anyway"]])))
          :enter (let [{:keys [name]} (current-task)] (status/line :head "TASK %s %s" name (string/join " " *command-line-args*)))
          :leave (let [{:keys [name]} (current-task)] (status/line :detail "\nTASK %s done." name))
 
-         increment-version {:task (do (git/increment-version (fs/file "src/atomist/web/handler.clj")))}
+         version {:task (tasks/describe)}
+
+         print-version {:depends [version]
+                        :task (println version)}
+
+         increment-version {:task (do (tasks/increment-version (fs/file "src/atomist/web/handler.clj")))}
+
+         next-version {:task (tasks/next-tag)}
+
+         set-version {:depends [next-version]
+                      :task (tasks/set-version (fs/file "src/atomist/main.clj") next-version)}
+
+         print-next-version {:depends [next-version]
+                             :task (println next-version)}
+
+         tag {:depends [next-version]
+              :task (shell (format "git tag %s" next-version))}
+
+         pull {:task (shell (format "git pull origin main"))}
 
          commit {:depends [increment-version]
-                 :task (git/recommit-any-updates (-> cli-opts :options :message))}
+                 :task (tasks/recommit-any-updates (or (-> cli-opts :options :message) (format "next version -> %s" increment-version)))}
 
-         clean? {:task (if (and (not (-> cli-opts :options :skip-clean-check)) (not (git/clean?)))
+         clean? {:task (if (and (not (-> cli-opts :options :skip-clean-check)) (not (tasks/clean?)))
                          (throw (ex-info "dirty working copy. stop" {})))}
+
+         push {:depends [version]
+               :task (do (shell "git push origin main")
+                         (shell (format "git push origin %s" version)))}
+
+         kick {:depends [commit pull clean? tag version push]
+               :task (println "pushed " version)}
+
          ;; requires the jib tool to be installed
-         build-image {:depends [commit clean?]
+         build-image {:depends [commit pull clean? tag version push]
                       :task (when (or
                                    (seq (fs/modified-since "target/app.jar" (fs/glob "src" "**.clj")))
                                    (seq (fs/modified-since "target/app.jar" (fs/glob "." "deps.edn")))
                                    (seq (fs/modified-since "target/app.jar" (fs/glob "." "jib.edn"))))
-                              (clojure "-Tjib" "build" ":tag" (git/describe)))}
-         context (shell "kubectl config use-context ecr-atmtest")
-         deploy {:depends [build-image context]
-                 :task (-> (p/process "kustomize build ." {:dir "resources/k8s/deployment"})
-                           (p/process "envsubst" {:extra-env {"GIT_DESCRIBE" (git/describe)}})
-                           (p/process "kubectl apply -f -" {:out :string})
-                           deref
-                           :out
-                           (println))}}}
+                              (println "version is " version)
+                              (clojure "-T:jib" "build" ":tag" version))}
+
+         kube-config-context {:task (if-let [c (-> cli-opts :options :context)]
+                                      c
+                                      (throw (ex-info "run with --context" {})))}
+         context {:depends [kube-config-context]
+                  :task (shell (format "kubectl config use-context %s" kube-config-context))} }}
