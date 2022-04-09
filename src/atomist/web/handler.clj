@@ -9,7 +9,7 @@
 (defroutes app
   (GET "/health" _ (constantly {:status 200 :body "ok"}))
   (->
-   (GET "/" _ (constantly {:status 200 :body {:hey "you" :version 43 :time (str (ld/now))}}))
+   (GET "/" _ (constantly {:status 200 :body {:hey "you" :version 44 :time (str (ld/now))}}))
    (wrap-json-body {:keywords? true :bigdecimals? true})  
    (wrap-json-response))
   (route/not-found "<h1>not found</h1>"))
